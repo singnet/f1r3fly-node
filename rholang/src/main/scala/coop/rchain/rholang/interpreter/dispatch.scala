@@ -35,11 +35,13 @@ class RholangAndScalaDispatcher[M[_]] private (
         val env     = Dispatch.buildEnv(dataList)
         val randoms = parWithRand.randomState +: dataList.toVector.map(_.randomState)
         reducer.eval(parWithRand.body)(env, Blake2b512Random.merge(randoms))
-      case ScalaBodyRef(ref) =>
+      case ScalaBodyRef(ref) => {
+        // println("\nscalaBodyRef dispatch")
         _dispatchTable.get(ref) match {
           case Some(f) => f(dataList)
           case None    => s.raiseError(new Exception(s"dispatch: no function for $ref"))
         }
+      }
       case Empty =>
         s.unit
     }

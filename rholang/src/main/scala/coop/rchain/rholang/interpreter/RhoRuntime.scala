@@ -178,15 +178,24 @@ class RhoRuntimeImpl[F[_]: Sync: Span](
   override def evaluate(term: String, initialPhlo: Cost, normalizerEnv: Map[String, Name])(
       implicit rand: Blake2b512Random
   ): F[EvaluateResult] = {
+    // println("\nrand in scala evaluate: " + Blake2b512Random.debugStr(rand))
     implicit val c: _cost[F]       = cost
     implicit val m                 = mergeChs
     implicit val i: Interpreter[F] = Interpreter.newIntrepreter[F]
-    Interpreter[F].injAttempt(
-      reducer,
-      term,
-      initialPhlo,
-      normalizerEnv
-    )
+    val res = for {
+      map <- space.toMap
+      _   <- Sync[F].delay(println("\nspace before in evaluate: " + map.size))
+      result <- Interpreter[F].injAttempt(
+                 reducer,
+                 term,
+                 initialPhlo,
+                 normalizerEnv
+               )
+      map <- space.toMap
+      _   <- Sync[F].delay(println("\nspace after in evaluate: " + map.size))
+      _   <- Sync[F].delay(println("\nevaluate result: " + result))
+    } yield result
+    res
   }
 
   override def reset(root: Blake2b256Hash): F[Unit] = space.reset(root)
@@ -217,6 +226,7 @@ class RhoRuntimeImpl[F[_]: Sync: Span](
   override def setBlockData(blockData: BlockData): F[Unit] = blockDataRef.set(blockData)
 
   override def setInvalidBlocks(invalidBlocks: Map[BlockHash, Validator]): F[Unit] = {
+    // println("\ninvalidBlocks in setInvalidBlocks: " + invalidBlocks)
     val invalidBlocksPar: Par =
       Par(
         exprs = Seq(
@@ -533,6 +543,8 @@ object RhoRuntime {
     for {
       cost <- runtime.cost.get
       _    <- runtime.cost.set(Cost.UNSAFE_MAX)
+      // _    = println(s"\nrand in bootstrapRegistry: ${Blake2b512Random.debugStr(rand)}")
+
       // _    = println("\nRegistryBootstrap.AST: " + RegistryBootstrap.AST)
       _ <- runtime.inj(RegistryBootstrap.AST)
       _ <- runtime.cost.set(cost)

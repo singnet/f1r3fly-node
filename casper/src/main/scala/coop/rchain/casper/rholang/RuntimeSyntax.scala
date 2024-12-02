@@ -170,7 +170,7 @@ final class RuntimeOps[F[_]: Sync: Span: Log](
         _ <- runtime.setBlockData(
               BlockData(blockTime, blockNumber, PublicKey(Array[Byte]()), 0)
             )
-        // _                   <- Sync[F].delay(println("\nhit computeGenesis"))
+        _                   <- Sync[F].delay(println("\nhit computeGenesis, terms length: " + terms.length))
         genesisPreStateHash <- emptyStateHash
         // _ <- Sync[F].delay(
         //       println(

@@ -264,6 +264,7 @@ object Blake2b512Random {
       s"pathPosition: ${rand.pathView.position()}\n" +
       s"position: ${rand.position}\n" +
       s"rotPosition: ${rotPosition}\n" +
-      s"remainder: ${rand.hashArray.slice(rotPosition, 64).mkString(", ")}\n"
+      s"remainder: ${rand.hashArray.slice(rotPosition, 64).mkString(", ")}\n" +
+      s"hashArray: ${rand.hashArray.mkString(", ")}\n"
   }
 }

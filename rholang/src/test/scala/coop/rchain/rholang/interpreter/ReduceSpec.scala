@@ -1518,6 +1518,7 @@ class ReduceSpec extends FlatSpec with Matchers with AppendedClues with Persiste
       )
     )
     // result.toIterable should contain theSameElementsAs expectedResult
+    println("\nmergeRand: " + Blake2b512Random.debugStr(mergeRand))
 
     val transformedResult = result.map {
       case (channels, row) => (channels, produceEventsWithoutHashes(row))

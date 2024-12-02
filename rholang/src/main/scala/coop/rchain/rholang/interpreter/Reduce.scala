@@ -70,6 +70,9 @@ class DebruijnInterpreter[M[_]: Sync: Parallel: Log: Concurrent: _cost](
       data: ListParWithRandom,
       persistent: Boolean
   ): M[Unit] =
+    // println("\nhit produce in Reduce")
+    // println("chan in produce: " + chan)
+    // println("data in produce: " + data)
     updateMergeableChannels(chan) *>
       space.produce(chan, data, persist = persistent) >>= { produceResult =>
       {
@@ -309,7 +312,8 @@ class DebruijnInterpreter[M[_]: Sync: Parallel: Log: Concurrent: _cost](
                   }
       data      <- send.data.toList.traverse(evalExpr)
       substData <- data.traverse(substituteAndCharge[Par, M](_, depth = 0, env))
-      _         <- produce(unbundled, ListParWithRandom(substData, rand), send.persistent)
+      // _         = println("\nrand in evalSend: " + Blake2b512Random.debugStr(rand))
+      _ <- produce(unbundled, ListParWithRandom(substData, rand), send.persistent)
     } yield ()
 
   private def eval(receive: Receive)(
@@ -331,6 +335,7 @@ class DebruijnInterpreter[M[_]: Sync: Parallel: Log: Concurrent: _cost](
                     depth = 0,
                     env.shift(receive.bindCount)
                   )
+      // _ = println("\nrand in evalReceive: " + Blake2b512Random.debugStr(rand))
       _ <- consume(binds, ParWithRandom(substBody, rand), receive.persistent, receive.peek)
     } yield ()
 
@@ -412,12 +417,16 @@ class DebruijnInterpreter[M[_]: Sync: Parallel: Log: Concurrent: _cost](
   private def eval(
       neu: New
   )(implicit env: Env[Par], rand: Blake2b512Random): M[Unit] = {
+    // println("\nrand in evalNew: " + Blake2b512Random.debugStr(rand))
 
     def alloc(count: Int, urns: Seq[String]): M[Env[Par]] = {
       val simpleNews = (0 until (count - urns.size)).toList.foldLeft(env) { (_env, _) =>
         val addr: Par = GPrivate(ByteString.copyFrom(rand.next()))
+        // println("\nrand in simpleNews: " + Blake2b512Random.debugStr(rand))
         _env.put(addr)
       }
+
+      // println("\nrand in evalNew after: " + Blake2b512Random.debugStr(rand))
 
       def normalizerBugFound(urn: String) =
         BugFoundError(

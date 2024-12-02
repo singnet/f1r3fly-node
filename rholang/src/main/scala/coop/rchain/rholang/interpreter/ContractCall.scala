@@ -52,6 +52,7 @@ class ContractCall[F[_]: Concurrent: Span](
     } yield ()
 
   def unapply(contractArgs: Seq[ListParWithRandom]): Option[(Producer[F], Seq[Par])] =
+    // println("\ncontractCall unapply")
     contractArgs match {
       case Seq(
           ListParWithRandom(
