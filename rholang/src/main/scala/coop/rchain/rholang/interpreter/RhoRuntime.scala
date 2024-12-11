@@ -183,8 +183,10 @@ class RhoRuntimeImpl[F[_]: Sync: Span](
     implicit val m                 = mergeChs
     implicit val i: Interpreter[F] = Interpreter.newIntrepreter[F]
     val res = for {
-      map <- space.toMap
-      _   <- Sync[F].delay(println("\nspace before in evaluate: " + map.size))
+      map        <- space.toMap
+      _          <- Sync[F].delay(println("\nspace before in evaluate: " + map.size))
+      hotChanges <- this.getHotChanges
+      // _          = println(s"\nhotChanges in evaluate: ${hotChanges.size}")
       result <- Interpreter[F].injAttempt(
                  reducer,
                  term,
@@ -447,14 +449,17 @@ object RhoRuntime {
       blockData: Ref[F, BlockData],
       invalidBlocks: InvalidBlocks[F],
       extraSystemProcesses: Seq[Definition[F]]
-  ): RhoDispatchMap[F] =
-    (stdSystemProcesses[F] ++ stdRhoCryptoProcesses[F] ++ extraSystemProcesses)
+  ): RhoDispatchMap[F] = {
+    val map = (stdSystemProcesses[F] ++ stdRhoCryptoProcesses[F] ++ extraSystemProcesses)
       .map(
         _.toDispatchTable(
           ProcessContext(space, dispatcher, blockData, invalidBlocks)
         )
       )
       .toMap
+    // println(s"\nLength of map: ${map.size}")
+    map
+  }
 
   val basicProcesses: Map[String, Par] = Map[String, Par](
     "rho:registry:lookup"          -> Bundle(FixedChannels.REG_LOOKUP, writeFlag = true),
@@ -504,8 +509,10 @@ object RhoRuntime {
       invalidBlocks = InvalidBlocks.unsafe[F]()
       urnMap = basicProcesses ++ (stdSystemProcesses[F] ++ stdRhoCryptoProcesses[F] ++ extraSystemProcesses)
         .map(_.toUrnMap)
+      // _ = println(s"\nURN Map Length: ${urnMap.size}")
       procDefs = (stdSystemProcesses[F] ++ stdRhoCryptoProcesses[F] ++ extraSystemProcesses)
         .map(_.toProcDefs)
+      // _ = println(s"\nProc Defs Length: ${procDefs.size}")
     } yield (blockDataRef, invalidBlocks, urnMap, procDefs)
 
   def createRhoEnv[F[_]: Concurrent: Parallel: _cost: Log: Metrics: Span](
@@ -546,7 +553,12 @@ object RhoRuntime {
       // _    = println(s"\nrand in bootstrapRegistry: ${Blake2b512Random.debugStr(rand)}")
 
       // _    = println("\nRegistryBootstrap.AST: " + RegistryBootstrap.AST)
-      _ <- runtime.inj(RegistryBootstrap.AST)
+
+      hotChanges <- runtime.getHotChanges
+      // _          = println(s"\nspace in bootstrapRegistry before inj ast: ${hotChanges.size}")
+      _          <- runtime.inj(RegistryBootstrap.AST)
+      hotChanges <- runtime.getHotChanges
+      // _          = println(s"\nspace in bootstrapRegistry after inj ast: ${hotChanges.size}")
       _ <- runtime.cost.set(cost)
     } yield ()
   }
@@ -569,6 +581,7 @@ object RhoRuntime {
         (reducer, blockRef, invalidBlocks) = rhoEnv
         runtime                            = new RhoRuntimeImpl[F](reducer, rspace, cost, blockRef, invalidBlocks, mergeChs)
         _ <- if (initRegistry) {
+              // println("\nhit initRegistry")
               bootstrapRegistry(runtime) >> runtime.createCheckpoint
             } else ().pure[F]
       } yield runtime
@@ -631,6 +644,7 @@ object RhoRuntime {
           mergeChs
         )
         _ <- if (initRegistry) {
+              // println("\nhit initRegistry in replay")
               bootstrapRegistry(runtime) >> runtime.createCheckpoint
             } else ().pure[F]
       } yield runtime

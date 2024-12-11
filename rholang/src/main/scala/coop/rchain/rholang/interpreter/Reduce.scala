@@ -70,7 +70,7 @@ class DebruijnInterpreter[M[_]: Sync: Parallel: Log: Concurrent: _cost](
       data: ListParWithRandom,
       persistent: Boolean
   ): M[Unit] =
-    // println("\nhit produce in Reduce")
+    // println("\nreduce produce")
     // println("chan in produce: " + chan)
     // println("data in produce: " + data)
     updateMergeableChannels(chan) *>
@@ -102,6 +102,7 @@ class DebruijnInterpreter[M[_]: Sync: Parallel: Log: Concurrent: _cost](
       persistent: Boolean,
       peek: Boolean
   ): M[Unit] = {
+    // println("\nreduce consume")
     val (patterns: Seq[BindPattern], sources: Seq[Par]) = binds.unzip
 
     sources.toList.traverse(updateMergeableChannels) *>

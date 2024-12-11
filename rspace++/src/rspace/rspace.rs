@@ -339,6 +339,7 @@ where
 
     pub fn create_checkpoint(&mut self) -> Result<Checkpoint, RSpaceError> {
         // println!("\nhit rspace++ create_checkpoint");
+        // println!("\nspace before create_checkpoint: {:?}", self.store.to_map().len());
         let changes = self.store.changes();
         let next_history = self.history_repository.checkpoint(&changes);
         self.history_repository = Arc::new(next_history);
@@ -353,6 +354,8 @@ where
 
         self.create_new_hot_store(history_reader);
         self.restore_installs();
+
+        // println!("\nspace after create_checkpoint: {:?}", self.store.to_map().len());
 
         Ok(Checkpoint {
             root: self.history_repository.root(),
@@ -602,6 +605,7 @@ where
 
     pub fn reset(&mut self, root: Blake2b256Hash) -> Result<(), RSpaceError> {
         // println!("\nhit rspace++ reset");
+        // println!("\nspace in reset: {:?}", self.store.to_map().len());
         let next_history = self.history_repository.reset(&root)?;
         self.history_repository = Arc::new(next_history);
 
@@ -611,6 +615,8 @@ where
         let history_reader = self.history_repository.get_history_reader(root)?;
         self.create_new_hot_store(history_reader);
         self.restore_installs();
+
+        // println!("\nspace in reset after reset: {:?}", self.store.to_map().len());
 
         Ok(())
     }

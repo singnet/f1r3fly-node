@@ -30,6 +30,7 @@ class RholangAndScalaDispatcher[M[_]] private (
       continuation: TaggedContinuation,
       dataList: Seq[ListParWithRandom]
   ): M[Unit] =
+    // println(s"\ncontinuation: $continuation")
     continuation.taggedCont match {
       case ParBody(parWithRand) =>
         val env     = Dispatch.buildEnv(dataList)
