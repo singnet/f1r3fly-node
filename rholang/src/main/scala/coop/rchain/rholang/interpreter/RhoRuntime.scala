@@ -195,7 +195,7 @@ class RhoRuntimeImpl[F[_]: Sync: Span](
                )
       map <- space.toMap
       _   <- Sync[F].delay(println("\nspace after in evaluate: " + map.size))
-      _   <- Sync[F].delay(println("\nevaluate result: " + result))
+      // _   <- Sync[F].delay(println("\nevaluate result: " + result))
     } yield result
     res
   }

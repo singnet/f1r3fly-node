@@ -47,6 +47,27 @@ class RuntimeSpec extends FlatSpec with Matchers {
     )
   }
 
+  "Runtime" should "evaluate successfully" in {
+    val result = execute(
+      """new simpleLookupTest,
+     rl(`rho:registry:lookup`),
+     stdout(`rho:io:stdout`),
+     stdoutAck(`rho:io:stdoutAck`), ack in {
+         contract simpleLookupTest(@uri, result) = {
+             stdout!("REGISTRY_SIMPLE_LOOKUP_TEST: looking up X in the registry using identifier") |
+             new lookupResponse in {
+                 rl!(uri, *lookupResponse) |
+                 for(@val <- lookupResponse) {
+                     stdout!("REGISTRY_SIMPLE_LOOKUP_TEST: got X from the registry using identifier") |
+                     stdoutAck!(val, *result)
+                 }
+             }
+         }
+     }"""
+    )
+    assert(result.errors.isEmpty, s"Expected evaluation to succeed - it didn't.")
+  }
+
   private def checkError(rho: String, error: String): Unit =
     assert(execute(rho).errors.nonEmpty, s"Expected $rho to fail - it didn't.")
 
