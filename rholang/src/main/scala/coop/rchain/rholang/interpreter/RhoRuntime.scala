@@ -159,7 +159,13 @@ class RhoRuntimeImpl[F[_]: Sync: Span](
       : F[Map[Seq[Par], Row[BindPattern, ListParWithRandom, TaggedContinuation]]] = space.toMap
 
   override def inj(par: Par, env: Env[Par] = Env[Par]())(implicit rand: Blake2b512Random): F[Unit] =
-    reducer.inj(par)
+    for {
+      map    <- space.toMap
+      _      <- Sync[F].delay(println("\nspace before in inj: " + map.size))
+      result <- reducer.inj(par)
+      map    <- space.toMap
+      _      <- Sync[F].delay(println("\nspace after in inj: " + map.size))
+    } yield result
 
   override def consumeResult(
       channel: Seq[Par],
@@ -173,12 +179,19 @@ class RhoRuntimeImpl[F[_]: Sync: Span](
     implicit val c: _cost[F]       = cost
     implicit val m                 = mergeChs
     implicit val i: Interpreter[F] = Interpreter.newIntrepreter[F]
-    Interpreter[F].injAttempt(
-      reducer,
-      term,
-      initialPhlo,
-      normalizerEnv
-    )
+    val res = for {
+      map <- space.toMap
+      _   <- Sync[F].delay(println("\nspace before in evaluate: " + map.size))
+      result <- Interpreter[F].injAttempt(
+                 reducer,
+                 term,
+                 initialPhlo,
+                 normalizerEnv
+               )
+      map <- space.toMap
+      _   <- Sync[F].delay(println("\nspace after in evaluate: " + map.size))
+    } yield result
+    res
   }
 
   override def reset(root: Blake2b256Hash): F[Unit] = space.reset(root)

@@ -168,6 +168,7 @@ final class RuntimeOps[F[_]: Sync: Span: Log](
         _ <- runtime.setBlockData(
               BlockData(blockTime, blockNumber, PublicKey(Array[Byte]()), 0)
             )
+        _                             = println("\nhit computeGenesis, terms length: " + terms.length)
         genesisPreStateHash           <- emptyStateHash
         playResult                    <- playDeploys(genesisPreStateHash, terms, processDeployWithMergeableData)
         (stateHash, processedDeploys) = playResult
