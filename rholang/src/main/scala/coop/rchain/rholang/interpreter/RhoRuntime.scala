@@ -164,7 +164,7 @@ class RhoRuntimeImpl[F[_]: Sync: Span](
       _      <- Sync[F].delay(println("\nspace before in inj: " + map.size))
       result <- reducer.inj(par)
       map    <- space.toMap
-      _      <- Sync[F].delay(println("\nspace after in inj: " + map.size))
+      _      <- Sync[F].delay(println("space after in inj: " + map.size))
     } yield result
 
   override def consumeResult(
@@ -189,7 +189,7 @@ class RhoRuntimeImpl[F[_]: Sync: Span](
                  normalizerEnv
                )
       map <- space.toMap
-      _   <- Sync[F].delay(println("\nspace after in evaluate: " + map.size))
+      _   <- Sync[F].delay(println("space after in evaluate: " + map.size))
     } yield result
     res
   }
@@ -523,6 +523,7 @@ object RhoRuntime {
     implicit val rand: Blake2b512Random = bootstrapRand
     for {
       cost <- runtime.cost.get
+      _    = println("\ncalling bootstrapRegistry")
       _    <- runtime.cost.set(Cost.UNSAFE_MAX)
       _    <- runtime.inj(RegistryBootstrap.AST)
       _    <- runtime.cost.set(cost)
