@@ -61,6 +61,7 @@ class InterpreterImpl[F[_]: Sync: Span](implicit C: _cost[F], mergeChs: Ref[F, S
                      case err: InterpreterError => ParserError(err).raiseError[F, Par]
                    }
                }
+      // _ = println("\nparsed: " + parsed)
       // Empty mergeable channels
       _ <- mergeChs.update(_.empty)
 

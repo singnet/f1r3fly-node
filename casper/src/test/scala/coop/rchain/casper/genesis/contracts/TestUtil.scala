@@ -21,7 +21,12 @@ object TestUtil {
       runtime: RhoRuntime[F],
       normalizerEnv: Map[String, Par]
   )(implicit rand: Blake2b512Random): F[Unit] =
-    Compiler[F].sourceToADT(code, normalizerEnv) >>= (evalTerm(_, runtime))
+    for {
+      term <- Compiler[F].sourceToADT(code, normalizerEnv)
+      // _    = println(s"\nhit eval, normalizerEnv: $normalizerEnv")
+      // _ = println(s"\nhit eval, normalized par: $term")
+      _ <- evalTerm(term, runtime)
+    } yield ()
 
   private def evalTerm[F[_]: FlatMap](
       term: Par,
