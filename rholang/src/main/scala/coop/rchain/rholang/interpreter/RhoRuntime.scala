@@ -160,11 +160,11 @@ class RhoRuntimeImpl[F[_]: Sync: Span](
 
   override def inj(par: Par, env: Env[Par] = Env[Par]())(implicit rand: Blake2b512Random): F[Unit] =
     for {
-      map    <- space.toMap
-      _      <- Sync[F].delay(println("\nspace hot store size before in inj: " + map.size))
+      map <- space.toMap
+      // _      <- Sync[F].delay(println("\nspace hot store size before in inj: " + map.size))
       result <- reducer.inj(par)
       map    <- space.toMap
-      _      <- Sync[F].delay(println("space hot store size after in inj: " + map.size))
+      // _      <- Sync[F].delay(println("space hot store size after in inj: " + map.size))
     } yield result
 
   override def consumeResult(
@@ -181,7 +181,7 @@ class RhoRuntimeImpl[F[_]: Sync: Span](
     implicit val i: Interpreter[F] = Interpreter.newIntrepreter[F]
     val res = for {
       map <- space.toMap
-      _   <- Sync[F].delay(println("\nspace hot store size before in evaluate: " + map.size))
+      // _   <- Sync[F].delay(println("\nspace hot store size before in evaluate: " + map.size))
       result <- Interpreter[F].injAttempt(
                  reducer,
                  term,
@@ -189,7 +189,7 @@ class RhoRuntimeImpl[F[_]: Sync: Span](
                  normalizerEnv
                )
       map <- space.toMap
-      _   <- Sync[F].delay(println("space hot store size after in evaluate: " + map.size))
+      // _   <- Sync[F].delay(println("space hot store size after in evaluate: " + map.size))
     } yield result
     res
   }
@@ -523,10 +523,10 @@ object RhoRuntime {
     implicit val rand: Blake2b512Random = bootstrapRand
     for {
       cost <- runtime.cost.get
-      _    = println("\ncalling bootstrapRegistry")
-      _    <- runtime.cost.set(Cost.UNSAFE_MAX)
-      _    <- runtime.inj(RegistryBootstrap.AST)
-      _    <- runtime.cost.set(cost)
+      // _    = println("\ncalling bootstrapRegistry")
+      _ <- runtime.cost.set(Cost.UNSAFE_MAX)
+      _ <- runtime.inj(RegistryBootstrap.AST)
+      _ <- runtime.cost.set(cost)
     } yield ()
   }
 
