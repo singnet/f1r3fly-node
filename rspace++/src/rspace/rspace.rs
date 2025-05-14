@@ -100,7 +100,7 @@ where
     }
 
     fn reset(&mut self, root: Blake2b256Hash) -> Result<(), RSpaceError> {
-        // println!("\nhit rspace++ reset, root: {:?}", root);
+        println!("\nhit rspace++ reset, root: {:?}", root);
         let next_history = self.history_repository.reset(&root)?;
         self.history_repository = Arc::new(next_history);
 
