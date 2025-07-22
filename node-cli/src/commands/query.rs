@@ -73,7 +73,10 @@ pub async fn blocks_command(args: &BlocksArgs) -> Result<(), Box<dyn std::error:
             "🔍 Getting {} recent blocks from {}:{}",
             args.number, args.host, args.port
         );
-        let url = format!("http://{}:{}/blocks/{}", args.host, args.port, args.number);
+        let url = format!(
+            "http://{}:{}/api/blocks/{}",
+            args.host, args.port, args.number
+        );
 
         match client.get(&url).send().await {
             Ok(response) => {
@@ -100,6 +103,44 @@ pub async fn blocks_command(args: &BlocksArgs) -> Result<(), Box<dyn std::error:
     }
 
     Ok(())
+}
+
+pub async fn get_latest_block_number(args: &BlocksArgs) -> Result<u64, Box<dyn std::error::Error>> {
+    let start_time = Instant::now();
+    let client = reqwest::Client::new();
+
+    println!(
+        "🔍 Getting latest block number from {}:{}",
+        args.host, args.port
+    );
+    let url = format!("http://{}:{}/api/blocks/{}", args.host, args.port, 1);
+
+    match client.get(&url).send().await {
+        Ok(response) => {
+            let duration = start_time.elapsed();
+            if response.status().is_success() {
+                let blocks_text = response.text().await?;
+                let blocks_json: serde_json::Value = serde_json::from_str(&blocks_text)?;
+
+                println!("✅ Block retrieved successfully!");
+                println!("⏱️  Time taken: {:.2?}", duration);
+                // println!("🧱 Latest Block:");
+                // println!("{}", serde_json::to_string_pretty(&blocks_json)?);
+                let block_number = blocks_json[0]["blockNumber"]
+                    .as_u64()
+                    .ok_or("Invalid block number")?;
+                Ok(block_number)
+            } else {
+                println!("❌ Failed to get blocks: HTTP {}", response.status());
+                return Err(response.text().await?.into());
+            }
+        }
+        Err(e) => {
+            println!("❌ Connection failed!");
+            println!("Error: {}", e);
+            return Err(e.into());
+        }
+    }
 }
 
 pub async fn bonds_command(args: &HttpArgs) -> Result<(), Box<dyn std::error::Error>> {

@@ -1,3 +1,5 @@
+use crate::args::BlocksArgs;
+use crate::commands::query::get_latest_block_number;
 use blake2::{Blake2b, Digest};
 use models::casper::v1::deploy_response::Message as DeployResponseMessage;
 use models::casper::v1::deploy_service_client::DeployServiceClient;
@@ -64,9 +66,26 @@ impl<'a> F1r3flyApi<'a> {
             50_000
         };
 
+        // call to observer node to get the latest block number
+        let block_args = BlocksArgs {
+            host: "localhost".to_string(),
+            port: 40453,
+            number: 1 as u32,
+            block_hash: None,
+        };
+
+        let latest_block_number = get_latest_block_number(&block_args)
+            .await
+            .map_or(1, |n| n.max(1));
+        println!("Using latest block number: {}", latest_block_number);
+
         // Build and sign the deployment
-        let deployment =
-            self.build_deploy_msg(rho_code.to_string(), phlo_limit, language.to_string());
+        let deployment = self.build_deploy_msg(
+            rho_code.to_string(),
+            phlo_limit,
+            language.to_string(),
+            latest_block_number,
+        );
 
         // Connect to the F1r3fly node
         let mut deploy_service_client =
@@ -310,16 +329,29 @@ impl<'a> F1r3flyApi<'a> {
     /// * `code` - Rholang source code to deploy
     /// * `phlo_limit` - Maximum amount of phlo to use for execution
     /// * `language` - Language of the deploy (typically "rholang")
+    /// * `latest_block_number` - The latest block number to use for valid_after_block_number
     ///
     /// # Returns
     ///
     /// A signed `DeployDataProto` ready to be sent to the node
-    fn build_deploy_msg(&self, code: String, phlo_limit: i64, language: String) -> DeployDataProto {
+    fn build_deploy_msg(
+        &self,
+        code: String,
+        phlo_limit: i64,
+        language: String,
+        latest_block_number: u64,
+    ) -> DeployDataProto {
         // Get current timestamp in milliseconds
         let timestamp = SystemTime::now()
             .duration_since(UNIX_EPOCH)
             .expect("Failed to get system time")
             .as_millis() as i64;
+
+        let valid_after_block_number = (latest_block_number - 1) as i64;
+        println!(
+            "Using valid after block number: {}",
+            valid_after_block_number
+        );
 
         // Create a projection with only the fields used for signature calculation
         // IMPORTANT: The language field is deliberately excluded from signature calculation
@@ -328,7 +360,7 @@ impl<'a> F1r3flyApi<'a> {
             timestamp,
             phlo_price: 1,
             phlo_limit,
-            valid_after_block_number: 0,
+            valid_after_block_number: valid_after_block_number,
             shard_id: "root".into(),
             language: String::new(), // Excluded from signature calculation
             sig: ByteString::new(),
@@ -360,7 +392,7 @@ impl<'a> F1r3flyApi<'a> {
             timestamp,
             phlo_price: 1,
             phlo_limit,
-            valid_after_block_number: 0,
+            valid_after_block_number: valid_after_block_number,
             shard_id: "root".into(),
             language,
             sig: ByteString::from(sig_bytes),
