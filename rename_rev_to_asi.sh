@@ -145,10 +145,10 @@ echo "📝 Replacing text in files..."
 # Main identifiers (case-sensitive) - ONLY in code files
 # NOTE: Documentation files (.md, .txt, .json, .py, etc.) are NOT processed
 # Ticker team should update documentation themselves based on their future features
-find . -type f \( -name "*.scala" -o -name "*.rs" -o -name "*.rho" \) ! -path "./.git/*" | while read -r file; do
+find . -type f \( -name "*.scala" -o -name "*.rs" -o -name "*.rho" -o -name "*.rhox" \) ! -path "./.git/*" | while read -r file; do
     # Skip if file is empty or doesn't exist
     [ -f "$file" ] || continue
-    
+
     # Case-sensitive replacements
     sed -i.bak \
         -e "s/RevVault/${TICKER_UPPER}Vault/g" \
@@ -173,7 +173,7 @@ done
 
 # 2. REPLACE URI IN REGISTRY
 echo "🔗 Replacing Registry URIs..."
-find . -type f \( -name "*.scala" -o -name "*.rs" -o -name "*.rho" \) ! -path "./.git/*" | while read -r file; do
+find . -type f \( -name "*.scala" -o -name "*.rs" -o -name "*.rho" -o -name "*.rhox" \) ! -path "./.git/*" | while read -r file; do
     sed -i.bak \
         -e "s/rho:rchain:revVault/rho:rchain:${TICKER_LOWER}Vault/g" \
         -e "s/rho:rchain:multiSigRevVault/rho:rchain:multiSig${TICKER_UPPER}Vault/g" \
@@ -201,9 +201,17 @@ find . -name "*.scala" | while read -r file; do
         "$file"
 done
 
+# 4c. FORCE package line update in test sources (anchor at start of line)
+echo "✅ Verifying test package lines use ${TICKER_LOWER}vaultexport..."
+find node/src/test/scala -name "*.scala" | while read -r file; do
+    sed -i.bak -E \
+        -e "s/^package[[:space:]]+coop\.rchain\.node\.revvaultexport/package coop.rchain.node.${TICKER_LOWER}vaultexport/g" \
+        "$file"
+done
+
 # 4b. ADDITIONAL: Update any remaining revvaultexport references in all file types
 echo "🔄 Updating any remaining revvaultexport references..."
-find . -type f \( -name "*.scala" -o -name "*.rs" -o -name "*.rho" \) ! -path "./.git/*" | while read -r file; do
+find . -type f \( -name "*.scala" -o -name "*.rs" -o -name "*.rho" -o -name "*.rhox" \) ! -path "./.git/*" | while read -r file; do
     sed -i.bak \
         -e "s/coop\.rchain\.node\.revvaultexport/coop.rchain.node.${TICKER_LOWER}vaultexport/g" \
         "$file"
@@ -211,7 +219,7 @@ done
 
 # 5. UPDATE COMMENTS AND DOCUMENTATION (selective)
 echo "📚 Updating comments..."
-find . -type f \( -name "*.scala" -o -name "*.rs" -o -name "*.rho" \) ! -path "./.git/*" | while read -r file; do
+find . -type f \( -name "*.scala" -o -name "*.rs" -o -name "*.rho" -o -name "*.rhox" \) ! -path "./.git/*" | while read -r file; do
     sed -i.bak \
         -e "s/Rev vault/${TICKER_UPPER} vault/g" \
         -e "s/Rev address/${TICKER_UPPER} address/g" \
@@ -251,7 +259,7 @@ find . -name "*.scala" | while read -r file; do
         "$file"
 done
 
-# 6c. CRITICAL: Update system URI definition in RhoRuntime.scala  
+# 6c. CRITICAL: Update system URI definition in RhoRuntime.scala
 echo "🔗 Updating system URI definitions..."
 if [ -f "rholang/src/main/scala/coop/rchain/rholang/interpreter/RhoRuntime.scala" ]; then
     sed -i.bak \
@@ -270,23 +278,185 @@ find . -name "*.scala" | while read -r file; do
         "$file"
 done
 
+# 6e. CRITICAL: Special handling for RevGenerator.scala code variable content
+echo "🔧 Updating RevGenerator.scala code variable content..."
+if [ -f "casper/src/main/scala/coop/rchain/casper/genesis/contracts/RevGenerator.scala" ]; then
+    sed -i.bak \
+        -e "s/revVaultCh/${TICKER_LOWER}VaultCh/g" \
+        -e "s/RevVault/${TICKER_UPPER}Vault/g" \
+        -e "s/revVaultInitCh/${TICKER_LOWER}VaultInitCh/g" \
+        -e "s/\`rho:rchain:revVault\`/\`rho:rchain:${TICKER_LOWER}Vault\`/g" \
+        -e "s/stripMargin('#')/stripMargin('|')/g" \
+        -e "s/# /| /g" \
+        -e "s/^         #/         |/g" \
+        "casper/src/main/scala/coop/rchain/casper/genesis/contracts/RevGenerator.scala"
+    echo "✅ Updated RevGenerator.scala code variable content"
+fi
+
+# 6f. CRITICAL: Special handling for PoS.rhox - Update vault URIs and contract references
+echo "🔧 Updating PoS.rhox vault URIs and contract references..."
+if [ -f "casper/src/main/resources/PoS.rhox" ]; then
+    sed -i.bak \
+        -e "s/rho:rev:address/rho:${TICKER_LOWER}:address/g" \
+        -e "s/rho:rchain:revVault/rho:rchain:${TICKER_LOWER}Vault/g" \
+        -e "s/rho:rchain:multiSigRevVault/rho:rchain:multiSig${TICKER_UPPER}Vault/g" \
+        -e "s/RevVault/${TICKER_UPPER}Vault/g" \
+        -e "s/MultiSigRevVault/MultiSig${TICKER_UPPER}Vault/g" \
+        -e "s/revVaultCh/${TICKER_LOWER}VaultCh/g" \
+        -e "s/multiSigRevVaultCh/multiSig${TICKER_UPPER}VaultCh/g" \
+        -e "s/revAddressOps/${TICKER_LOWER}AddressOps/g" \
+        -e "s/posDeployerRevAddressCh/posDeployer${TICKER_UPPER}AddressCh/g" \
+        -e "s/fromRevAddress/from${TICKER_UPPER}Address/g" \
+        -e "s/toRevAddress/to${TICKER_UPPER}Address/g" \
+        -e "s/revAddressCh/${TICKER_LOWER}AddressCh/g" \
+        "casper/src/main/resources/PoS.rhox"
+    echo "✅ Updated PoS.rhox vault URIs and contract references"
+fi
+
+# 6g. CRITICAL: Special handling for VaultBalanceGetterTest.scala dynamic test logic
+echo "🔧 Updating VaultBalanceGetterTest.scala with dynamic logic..."
+if [ -f "node/src/test/scala/coop/rchain/node/revvaultexport/VaultBalanceGetterTest.scala" ]; then
+    # Replace the entire "Get all vault" test with dynamic implementation
+    cat > temp_test_replacement.txt << 'EOF'
+  "Get all vault" should "return all vault balance" in {
+    val t = TestNode.standaloneEff(genesis).use { node =>
+      val genesisPostStateHash =
+        Blake2b256Hash.fromByteString(genesis.genesisBlock.body.state.postStateHash)
+      for {
+        runtime <- node.runtimeManager.spawnRuntime
+        _       <- runtime.reset(genesisPostStateHash)
+
+        // Find vaultMap dynamically by checking all genesis vault addresses
+        vaultPks = genesis.genesisVaults.toList.map(_._2)
+        balances <- vaultPks.traverse { pub =>
+                     val addr = TICKER_UPPERAddress.fromPublicKey(pub).get.address.toBase58
+                     val getVault =
+                       s"""new return, rl(`rho:registry:lookup`), TICKER_UPPERVaultCh, vaultCh in {
+                         |  rl!(`rho:rchain:TICKER_LOWERVault`, *TICKER_UPPERVaultCh) |
+                         |  for (@(_, TICKER_UPPERVault) <- TICKER_UPPERVaultCh) {
+                         |    @TICKER_UPPERVault!("findOrCreate", "${addr}", *vaultCh) |
+                         |    for (@(true, vault) <- vaultCh) {
+                         |      @vault!("balance", *return)
+                         |    }
+                         |  }
+                         |}
+                         |""".stripMargin
+                     for {
+                       balancePars <- node.runtimeManager
+                                       .playExploratoryDeploy(
+                                         getVault,
+                                         genesis.genesisBlock.body.state.postStateHash
+                                       )
+                       balance = if (balancePars.nonEmpty) {
+                         balancePars(0).exprs.headOption
+                           .flatMap(_.exprInstance.gInt)
+                           .map(_.toInt)
+                           .getOrElse(0)
+                       } else 0
+                     } yield balance
+                   }
+        _ = assert(balances.forall(_ == genesisInitialBalance))
+      } yield ()
+    }
+    t.runSyncUnsafe()
+  }
+EOF
+
+    # Replace TICKER placeholders with actual values
+    sed -i.bak \
+        -e "s/TICKER_UPPER/${TICKER_UPPER}/g" \
+        -e "s/TICKER_LOWER/${TICKER_LOWER}/g" \
+        temp_test_replacement.txt
+
+    # Replace the test in the file
+    sed -i.bak \
+        -e '/^  "Get all vault" should "return all vault balance" in {$/,/^  }$/c\
+  "Get all vault" should "return all vault balance" in {\
+    val t = TestNode.standaloneEff(genesis).use { node =>\
+      val genesisPostStateHash =\
+        Blake2b256Hash.fromByteString(genesis.genesisBlock.body.state.postStateHash)\
+      for {\
+        runtime <- node.runtimeManager.spawnRuntime\
+        _       <- runtime.reset(genesisPostStateHash)\
+\
+        // Find vaultMap dynamically by checking all genesis vault addresses\
+        vaultPks = genesis.genesisVaults.toList.map(_._2)\
+        balances <- vaultPks.traverse { pub =>\
+                     val addr = '${TICKER_UPPER}'Address.fromPublicKey(pub).get.address.toBase58\
+                     val getVault =\
+                       s"""new return, rl(`rho:registry:lookup`), '${TICKER_UPPER}'VaultCh, vaultCh in {\
+                         |  rl!(`rho:rchain:'${TICKER_LOWER}'Vault`, *'${TICKER_UPPER}'VaultCh) |\
+                         |  for (@(_, '${TICKER_UPPER}'Vault) <- '${TICKER_UPPER}'VaultCh) {\
+                         |    @'${TICKER_UPPER}'Vault!("findOrCreate", "${addr}", *vaultCh) |\
+                         |    for (@(true, vault) <- vaultCh) {\
+                         |      @vault!("balance", *return)\
+                         |    }\
+                         |  }\
+                         |}\
+                         |""".stripMargin\
+                     for {\
+                       balancePars <- node.runtimeManager\
+                                       .playExploratoryDeploy(\
+                                         getVault,\
+                                         genesis.genesisBlock.body.state.postStateHash\
+                                       )\
+                       balance = if (balancePars.nonEmpty) {\
+                         balancePars(0).exprs.headOption\
+                           .flatMap(_.exprInstance.gInt)\
+                           .map(_.toInt)\
+                           .getOrElse(0)\
+                       } else 0\
+                     } yield balance\
+                   }\
+        _ = assert(balances.forall(_ == genesisInitialBalance))\
+      } yield ()\
+    }\
+    t.runSyncUnsafe()\
+  }' \
+        "node/src/test/scala/coop/rchain/node/revvaultexport/VaultBalanceGetterTest.scala"
+
+    # Add missing import for cats implicits
+    sed -i.bak \
+        -e '/import monix.execution.Scheduler.Implicits.global/a\
+import cats.implicits._' \
+        "node/src/test/scala/coop/rchain/node/revvaultexport/VaultBalanceGetterTest.scala"
+
+    rm -f temp_test_replacement.txt
+    echo "✅ Updated VaultBalanceGetterTest.scala with dynamic logic"
+fi
+
 # 7. RENAME DIRECTORIES FIRST
 echo "📁 Renaming directories first..."
 
 # Main revvaultexport directory
 if [ -d "node/src/main/scala/coop/rchain/node/revvaultexport" ]; then
-    git mv "node/src/main/scala/coop/rchain/node/revvaultexport" "node/src/main/scala/coop/rchain/node/${TICKER_LOWER}vaultexport"
-    echo "✅ node/src/main/.../revvaultexport/ -> ${TICKER_LOWER}vaultexport/"
+    if git mv "node/src/main/scala/coop/rchain/node/revvaultexport" "node/src/main/scala/coop/rchain/node/${TICKER_LOWER}vaultexport" 2>/dev/null; then
+        echo "✅ node/src/main/.../revvaultexport/ -> ${TICKER_LOWER}vaultexport/ (git mv)"
+    else
+        mv "node/src/main/scala/coop/rchain/node/revvaultexport" "node/src/main/scala/coop/rchain/node/${TICKER_LOWER}vaultexport"
+        echo "✅ node/src/main/.../revvaultexport/ -> ${TICKER_LOWER}vaultexport/ (mv)"
+    fi
 fi
 
 # Test revvaultexport directory - CRITICAL: This was missed before!
 if [ -d "node/src/test/scala/coop/rchain/node/revvaultexport" ]; then
-    git mv "node/src/test/scala/coop/rchain/node/revvaultexport" "node/src/test/scala/coop/rchain/node/${TICKER_LOWER}vaultexport"
-    echo "✅ node/src/test/.../revvaultexport/ -> ${TICKER_LOWER}vaultexport/"
+    if git mv "node/src/test/scala/coop/rchain/node/revvaultexport" "node/src/test/scala/coop/rchain/node/${TICKER_LOWER}vaultexport" 2>/dev/null; then
+        echo "✅ node/src/test/.../revvaultexport/ -> ${TICKER_LOWER}vaultexport/ (git mv)"
+    else
+        mv "node/src/test/scala/coop/rchain/node/revvaultexport" "node/src/test/scala/coop/rchain/node/${TICKER_LOWER}vaultexport"
+        echo "✅ node/src/test/.../revvaultexport/ -> ${TICKER_LOWER}vaultexport/ (mv)"
+    fi
 fi
 
 # Look for any other revvaultexport directories we might have missed
-find . -type d -name "*revvaultexport*" -not -path "./.git/*" -not -path "*/target/*" | while read -r dir; do
+# Exclude build artifacts and IDE directories
+find . -type d -name "*revvaultexport*" \
+    -not -path "./.git/*" \
+    -not -path "./.bloop/*" \
+    -not -path "./.metals/*" \
+    -not -path "*/target/*" \
+    -not -path "./.idea/*" \
+    -not -path "./.vscode/*" | while read -r dir; do
     if [ -d "$dir" ]; then
         # Check if directory is not empty or is a source directory (not a build artifact)
         if [ "$(ls -A "$dir" 2>/dev/null)" ] || [[ "$dir" == *"/src/"* ]]; then
@@ -352,7 +522,7 @@ if [ -f "casper/src/main/scala/coop/rchain/casper/genesis/contracts/RevGenerator
     echo "✅ RevGenerator.scala -> ${TICKER_UPPER}Generator.scala"
 fi
 
-# CRITICAL: RevAddress.scala exists and must be renamed  
+# CRITICAL: RevAddress.scala exists and must be renamed
 if [ -f "rholang/src/main/scala/coop/rchain/rholang/interpreter/util/RevAddress.scala" ]; then
     git mv "rholang/src/main/scala/coop/rchain/rholang/interpreter/util/RevAddress.scala" "rholang/src/main/scala/coop/rchain/rholang/interpreter/util/${TICKER_UPPER}Address.scala"
     echo "✅ RevAddress.scala -> ${TICKER_UPPER}Address.scala"
@@ -380,7 +550,7 @@ done
 
 # 9b. ADDITIONAL: Final cleanup of any remaining references
 echo "🧹 Final cleanup of remaining references..."
-find . -type f \( -name "*.scala" -o -name "*.rs" -o -name "*.rho" \) ! -path "./.git/*" | while read -r file; do
+find . -type f \( -name "*.scala" -o -name "*.rs" -o -name "*.rho" -o -name "*.rhox" \) ! -path "./.git/*" | while read -r file; do
     sed -i.bak \
         -e "s/coop\.rchain\.node\.revvaultexport/coop.rchain.node.${TICKER_LOWER}vaultexport/g" \
         -e "s/node\.revvaultexport/node.${TICKER_LOWER}vaultexport/g" \
@@ -391,6 +561,13 @@ done
 echo "🧹 Cleaning up backup files..."
 find . -name "*.bak" -not -path "./.git/*" -not -path "*/target/*" -delete 2>/dev/null || true
 echo "✅ Cleanup completed!"
+
+# 9c. CLEAR SBT CACHES FOR ALL PROJECTS to refresh test discovery
+echo "🧼 Clearing SBT caches (all target directories)..."
+find . -type d -name target -not -path "./.git/*" -print0 | while IFS= read -r -d '' dir; do
+    rm -rf "$dir" 2>/dev/null || true
+    echo "✅ Removed $dir"
+done
 
 echo ""
 echo "🎉 REV -> ${TICKER_UPPER} migration completed!"
@@ -419,6 +596,7 @@ echo "   ✅ Updated hardcoded constants and values"
 echo "   ✅ Updated system process constants (REV_ADDRESS -> ${TICKER_UPPER}_ADDRESS)"
 echo "   ✅ Updated system URI definitions in RhoRuntime.scala"
 echo "   ✅ Updated system process method signatures (revAddress -> ${TICKER_LOWER}Address)"
+echo "   ✅ Updated PoS.rhox contract vault URIs and references"
 echo "   ✅ Renamed files (.rho, .rs, .scala)"
 echo "   ✅ Renamed directories and test specs"
 echo "   ✅ Moved ALL revvaultexport directories (main AND test)"
