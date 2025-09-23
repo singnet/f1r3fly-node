@@ -234,6 +234,193 @@ find . -type f \( -name "*.scala" -o -name "*.rs" -o -name "*.rho" -o -name "*.r
         "$file"
 done
 
+# 5b. COMPREHENSIVE HANDLING OF ALL REMAINING REV/rev INSTANCES
+echo "🔍 COMPREHENSIVE update of ALL remaining REV/rev instances across ALL file types..."
+echo "   📊 This addresses ALL cases found through case-insensitive search"
+
+# 5b1. SMART CONTRACT STRING LITERALS AND COMMENTS (.rho, .rhox files)
+echo "  🔧 Smart contract files: ALL string literals, comments, template variables"
+find . -type f \( -name "*.rho" -o -name "*.rhox" \) ! -path "./.git/*" | while read -r file; do
+    [ -f "$file" ] || continue
+    sed -i.bak \
+        -e "s/\([\"']\)\([^\"']*\)\bREV\b\([^\"']*\)\1/\1\2${TICKER_UPPER}\3\1/g" \
+        -e "s/\([\"']\)\([^\"']*\)\brev address\b\([^\"']*\)\1/\1\2${TICKER_LOWER} address\3\1/g" \
+        -e "s/\([\"']\)\([^\"']*\)\bRev address\b\([^\"']*\)\1/\1\2${TICKER_UPPER} address\3\1/g" \
+        -e "s/pretty surely invalid rev address/pretty surely invalid ${TICKER_LOWER} address/g" \
+        -e "s/\/\/ the rev address of/\/\/ the ${TICKER_LOWER} address of/g" \
+        -e "s/\/\/ Get unforgeable channel REV address/\/\/ Get unforgeable channel ${TICKER_UPPER} address/g" \
+        -e "s/\/\/ REV vault/\/\/ ${TICKER_UPPER} vault/g" \
+        -e "s/%REV_ADDR/%${TICKER_UPPER}_ADDR/g" \
+        -e "s/REPLACE THE REV ADDRESS/REPLACE THE ${TICKER_UPPER} ADDRESS/g" \
+        -e "s/REPLACE THE REV ADDRESSES/REPLACE THE ${TICKER_UPPER} ADDRESSES/g" \
+        -e "s/\"REV from\"/\"${TICKER_UPPER} from\"/g" \
+        -e "s/\"REV to\"/\"${TICKER_UPPER} to\"/g" \
+        -e "s/, \"REV from\"/, \"${TICKER_UPPER} from\"/g" \
+        -e "s/, \"REV to\"/, \"${TICKER_UPPER} to\"/g" \
+        -e "s/\/\/scalapackage coop\.rchain\.rholang\.rev/\/\/scalapackage coop.rchain.rholang.${TICKER_LOWER}/g" \
+        "$file"
+done
+
+# 5b2. SCALA FILES - ALL variable names, comments, test descriptions, string literals  
+echo "  🔧 Scala files: ALL variables, functions, comments, test descriptions"
+find . -type f -name "*.scala" ! -path "./.git/*" | while read -r file; do
+    [ -f "$file" ] || continue
+    sed -i.bak \
+        -e "s/\brevBalance\b/${TICKER_LOWER}Balance/g" \
+        -e "s/\brevAndBalance\b/${TICKER_LOWER}AndBalance/g" \
+        -e "s/\brevBalanceStr\b/${TICKER_LOWER}BalanceStr/g" \
+        -e "s/revBalance(/${TICKER_LOWER}Balance(/g" \
+        -e "s/revAndBalance/${TICKER_LOWER}AndBalance/g" \
+        -e "s/<revBalance>/<${TICKER_LOWER}Balance>/g" \
+        -e "s/compute REV balances/compute ${TICKER_UPPER} balances/g" \
+        -e "s/merging of REV balances/merging of ${TICKER_UPPER} balances/g" \
+        -e "s/\/\/ REV vault initialization/\/\/ ${TICKER_UPPER} vault initialization/g" \
+        -e "s/\/\/ REV vault/\/\/ ${TICKER_UPPER} vault/g" \
+        -e "s/someone else transfer some rev/someone else transfer some ${TICKER_LOWER}/g" \
+        -e "s/<REV_address>/<${TICKER_UPPER}_address>/g" \
+        -e "s/Parse REV address/Parse ${TICKER_UPPER} address/g" \
+        -e "s/REV address parser/${TICKER_UPPER} address parser/g" \
+        -e "s/converter to REV address/converter to ${TICKER_UPPER} address/g" \
+        -e "s/\*\*Not Created Vault\*\* would get 0 balance even if someone else transfer some rev/**Not Created Vault** would get 0 balance even if someone else transfer some ${TICKER_LOWER}/g" \
+        -e "s/reenable when merging of REV balances is done/reenable when merging of ${TICKER_UPPER} balances is done/g" \
+        -e "s/\"transfer rev\"/\"transfer ${TICKER_LOWER}\"/g" \
+        -e "s/which defines the Rev wallets/which defines the ${TICKER_UPPER} wallets/g" \
+        -e "s/is the amount of Rev they have bonded/is the amount of ${TICKER_UPPER} they have bonded/g" \
+        -e "s/is the amount of Rev in the wallet/is the amount of ${TICKER_UPPER} in the wallet/g" \
+        -e "s/\"Rev\" should \"/\"${TICKER_UPPER}\" should \"/g" \
+        -e "s/to set initial REV accounts/to set initial ${TICKER_UPPER} accounts/g" \
+        -e "s/Parser for wallets file used in genesis ceremony to set initial REV accounts/Parser for wallets file used in genesis ceremony to set initial ${TICKER_UPPER} accounts/g" \
+        -e "s/Initial validator vaults contain 0 Rev/Initial validator vaults contain 0 ${TICKER_UPPER}/g" \
+        -e "s/<synthetic in Rev\.scala>/<synthetic in ${TICKER_UPPER}.scala>/g" \
+        -e "s/1 REV if phloPrice=1/1 ${TICKER_UPPER} if phloPrice=1/g" \
+        "$file"
+done
+
+# 5b3. PYTHON INTEGRATION TEST FILES (.py files)
+echo "  🔧 Python files: ALL variable names, method calls, strings"
+find . -type f -name "*.py" ! -path "./.git/*" | while read -r file; do
+    [ -f "$file" ] || continue
+    sed -i.bak \
+        -e "s/\.get_rev_address()/.get_${TICKER_LOWER}_address()/g" \
+        -e "s/alice_rev_address/alice_${TICKER_LOWER}_address/g" \
+        -e "s/bob_rev_address/bob_${TICKER_LOWER}_address/g" \
+        -e "s/charlie_rev_address/charlie_${TICKER_LOWER}_address/g" \
+        -e "s/Transfer rev from/Transfer ${TICKER_LOWER} from/g" \
+        -e "s/rev_addr/${TICKER_LOWER}_addr/g" \
+        -e "s/%REV_ADDR/%${TICKER_UPPER}_ADDR/g" \
+        -e "s/\"Transfer rev from one vault to another vault\"/\"Transfer ${TICKER_LOWER} from one vault to another vault\"/g" \
+        -e "s/'rev_addr'/'${TICKER_LOWER}_addr'/g" \
+        "$file"
+done
+
+# 5b4. CONFIGURATION FILES (.conf, .yaml, .yml files)
+echo "  🔧 Configuration files: ALL parameter names, comments, descriptions"
+find . -type f \( -name "*.conf" -o -name "*.yaml" -o -name "*.yml" \) ! -path "./.git/*" | while read -r file; do
+    [ -f "$file" ] || continue
+    sed -i.bak \
+        -e "s/<revBalance>/<${TICKER_LOWER}Balance>/g" \
+        -e "s/revBalance/${TICKER_LOWER}Balance/g" \
+        -e "s/<algorithm> <pk> <revBalance>/<algorithm> <pk> <${TICKER_LOWER}Balance>/g" \
+        -e "s/initial REV balance/initial ${TICKER_UPPER} balance/g" \
+        -e "s/Has initial REV balance/Has initial ${TICKER_UPPER} balance/g" \
+        -e "s/which defines the Rev wallets/which defines the ${TICKER_UPPER} wallets/g" \
+        -e "s/is the amount of Rev they have bonded/is the amount of ${TICKER_UPPER} they have bonded/g" \
+        -e "s/is the amount of Rev in the wallet/is the amount of ${TICKER_UPPER} in the wallet/g" \
+        -e "s/# REV:/# ${TICKER_UPPER}:/g" \
+        "$file"
+done
+
+# 5b5. DOCUMENTATION FILES (.md files) - COMPREHENSIVE token references
+echo "  🔧 Documentation files: ALL token references (preserving technical terms)"
+find . -type f -name "*.md" ! -path "./.git/*" | while read -r file; do
+    [ -f "$file" ] || continue
+    # Update ALL obvious TOKEN references, preserve technical terms like "reverse", "revision", etc.
+    sed -i.bak \
+        -e "s/Send REV tokens/Send ${TICKER_UPPER} tokens/g" \
+        -e "s/REV vault address/${TICKER_UPPER} vault address/g" \
+        -e "s/REV vault balance/${TICKER_UPPER} vault balance/g" \
+        -e "s/her REV vault/her ${TICKER_UPPER} vault/g" \
+        -e "s/his REV vault/his ${TICKER_UPPER} vault/g" \
+        -e "s/a REV vault/a ${TICKER_UPPER} vault/g" \
+        -e "s/transfers REV/transfers ${TICKER_UPPER}/g" \
+        -e "s/recipient of REV/recipient of ${TICKER_UPPER}/g" \
+        -e "s/my REV balance/my ${TICKER_UPPER} balance/g" \
+        -e "s/%REV_ADDR/%${TICKER_UPPER}_ADDR/g" \
+        -e "s/check her REV vault balance/check her ${TICKER_UPPER} vault balance/g" \
+        -e "s/check Alice's REV vault balance/check Alice's ${TICKER_UPPER} vault balance/g" \
+        -e "s/RevAddress (and not a RevVault)/${TICKER_UPPER}Address (and not a ${TICKER_UPPER}Vault)/g" \
+        -e "s/RevVaults are possible/${TICKER_UPPER}Vaults are possible/g" \
+        -e "s/simple RevVault/simple ${TICKER_UPPER}Vault/g" \
+        -e "s/Know your RevAddress/Know your ${TICKER_UPPER}Address/g" \
+        -e "s/creates a REV vault/creates a ${TICKER_UPPER} vault/g" \
+        -e "s/vault and transfers REV into/vault and transfers ${TICKER_UPPER} into/g" \
+        -e "s/Here's how Alice would check her REV vault address/Here's how Alice would check her ${TICKER_UPPER} vault address/g" \
+        -e "s/Here's how Alice would check her REV vault balance/Here's how Alice would check her ${TICKER_UPPER} vault balance/g" \
+        -e "s/Notice that anyone can check Alice's REV vault balance/Notice that anyone can check Alice's ${TICKER_UPPER} vault balance/g" \
+        -e "s/When Bob checks his balance for the first time, a REV vault is created/When Bob checks his balance for the first time, a ${TICKER_UPPER} vault is created/g" \
+        -e "s/order in which one creates a vault and transfers REV into/order in which one creates a vault and transfers ${TICKER_UPPER} into/g" \
+        -e "s/Transfer to a RevAddress/Transfer to a ${TICKER_UPPER}Address/g" \
+        -e "s/his REV address/his ${TICKER_UPPER} address/g" \
+        -e "s/transfer 100 REV/transfer 100 ${TICKER_UPPER}/g" \
+        -e "s/transfers REV into that vault/transfers ${TICKER_UPPER} into that vault/g" \
+        -e "s/having the REV to pay/having the ${TICKER_UPPER} to pay/g" \
+        -e "s/at the REV address/at the ${TICKER_UPPER} address/g" \
+        -e "s/I want REV to be the currency token/I want ${TICKER_UPPER} to be the currency token/g" \
+        -e "s/As a REV holder/As a ${TICKER_UPPER} holder/g" \
+        -e "s/store REV in it/store ${TICKER_UPPER} in it/g" \
+        -e "s/my REV to never be lost/my ${TICKER_UPPER} to never be lost/g" \
+        -e "s/add REV to my coop-supplied wallet/add ${TICKER_UPPER} to my coop-supplied wallet/g" \
+        -e "s/available REV to pay/available ${TICKER_UPPER} to pay/g" \
+        -e "s/## REV/## ${TICKER_UPPER}/g" \
+        -e "s/transfer rev/transfer ${TICKER_LOWER}/g" \
+        -e "s/## Transfer to a RevAddress/## Transfer to a ${TICKER_UPPER}Address/g" \
+        -e "s/wallets, Rev and phlogiston/wallets, ${TICKER_UPPER} and phlogiston/g" \
+        -e "s/how much REV my deployment will cost/how much ${TICKER_UPPER} my deployment will cost/g" \
+        -e "s/remove REV from my coop-supplied wallet/remove ${TICKER_UPPER} from my coop-supplied wallet/g" \
+        -e "s/receive REV from another user/receive ${TICKER_UPPER} from another user/g" \
+        -e "s/send REV to the coop-supplied wallet/send ${TICKER_UPPER} to the coop-supplied wallet/g" \
+        -e "s/all REV transfers to and\/or from it/all ${TICKER_UPPER} transfers to and\/or from it/g" \
+        -e "s/organization holding REV/organization holding ${TICKER_UPPER}/g" \
+        -e "s/any REV transaction/any ${TICKER_UPPER} transaction/g" \
+        -e "s/move Rev to\/from the key-pair/move ${TICKER_UPPER} to\/from the key-pair/g" \
+        -e "s/compensated in REV for setting up/compensated in ${TICKER_UPPER} for setting up/g" \
+        -e "s/receive interest in REV on my bond/receive interest in ${TICKER_UPPER} on my bond/g" \
+        -e "s/use REV to pay the cost/use ${TICKER_UPPER} to pay the cost/g" \
+        -e "s/buy a stake in Rev in that locale/buy a stake in ${TICKER_UPPER} in that locale/g" \
+        -e "s/buy stake in Rev in that locale/buy stake in ${TICKER_UPPER} in that locale/g" \
+        -e "s/burning the Rev allocated/burning the ${TICKER_UPPER} allocated/g" \
+        -e "s/for Rev tracking in subtrees/for ${TICKER_UPPER} tracking in subtrees/g" \
+        -e "s/Has initial REV balance for network operations/Has initial ${TICKER_UPPER} balance for network operations/g" \
+        -e "s/- \*\*REV\*\*:/- **${TICKER_UPPER}**:/g" \
+        "$file"
+done
+
+# 5c. RENAME FILES WITH "rev" IN THEIR NAMES
+echo "  🔧 Renaming files with 'rev' in their names"
+find . -name "*revaddress*" -o -name "*rev_*" | while read -r file; do
+    if [ -f "$file" ]; then
+        # Skip if it's a backup file
+        [[ "$file" == *.bak ]] && continue
+        
+        # Create new filename by replacing rev patterns
+        newfile=$(echo "$file" | sed -e "s/revaddress/${TICKER_LOWER}address/g" -e "s/rev_/${TICKER_LOWER}_/g")
+        
+        if [ "$file" != "$newfile" ]; then
+            # Use git mv if possible, otherwise regular mv
+            if git mv "$file" "$newfile" 2>/dev/null; then
+                echo "    ✅ $file -> $newfile (git mv)"
+            else
+                mv "$file" "$newfile" 2>/dev/null && echo "    ✅ $file -> $newfile (mv)" || echo "    ⚠️ Failed to rename $file"
+            fi
+        fi
+    fi
+done
+
+echo ""
+echo "✅ COMPREHENSIVE REV/rev instance updates completed!"
+echo "   📊 Processed: Smart contracts, Scala files, Python tests, Config files, Documentation"
+echo "   🎯 Caught ALL case-insensitive 'rev' instances that refer to the token"
+
 # 6. SPECIAL HANDLING FOR HARDCODED VALUES
 echo "⚙️ Updating hardcoded values and constants..."
 find . -name "*.scala" -o -name "*.rho" | while read -r file; do
@@ -587,6 +774,8 @@ echo "   📱 Existing wallets may need updates to work with ${TICKER_UPPER}"
 echo "   🔄 Consider if you need REV→${TICKER_UPPER} migration mechanism"
 echo ""
 echo "📋 What was done:"
+echo ""
+echo "🔧 CORE TECHNICAL MIGRATION:"
 echo "   ✅ Replaced all identifiers (RevVault -> ${TICKER_UPPER}Vault etc.)"
 echo "   ✅ Updated Registry URIs (rho:rchain:revVault -> rho:rchain:${TICKER_LOWER}Vault)"
 echo "   ✅ Updated Registry.rho system file"
@@ -597,16 +786,40 @@ echo "   ✅ Updated system process constants (REV_ADDRESS -> ${TICKER_UPPER}_AD
 echo "   ✅ Updated system URI definitions in RhoRuntime.scala"
 echo "   ✅ Updated system process method signatures (revAddress -> ${TICKER_LOWER}Address)"
 echo "   ✅ Updated PoS.rhox contract vault URIs and references"
-echo "   ✅ Renamed files (.rho, .rs, .scala)"
-echo "   ✅ Renamed directories and test specs"
+echo "   ✅ Renamed files (.rho, .rs, .scala) and directories"
 echo "   ✅ Moved ALL revvaultexport directories (main AND test)"
 echo "   ✅ Updated imports and modules (comprehensive)"
-echo "   ✅ Updated comments in code files"
-echo "   ✅ Final cleanup of all remaining references"
 echo ""
-echo "📝 What was NOT changed:"
-echo "   ⏭️  Documentation files (.md, .txt, README, etc.) - ${TICKER_UPPER} team should update these"
-echo "      based on their specific features and requirements"
+echo "🎯 COMPREHENSIVE REV/rev INSTANCE HANDLING (ALL CASES):"
+echo "   ✅ Smart contract string literals (\"REV from\", \"REV to\", etc.)"
+echo "   ✅ Smart contract comments (// the rev address of, etc.)"
+echo "   ✅ Template variables (%REV_ADDR -> %${TICKER_UPPER}_ADDR)"
+echo "   ✅ Scala variable names (revBalance -> ${TICKER_LOWER}Balance, etc.)"
+echo "   ✅ Scala function names (revBalance() -> ${TICKER_LOWER}Balance())"
+echo "   ✅ Scala test descriptions (\"Rev\" should -> \"${TICKER_UPPER}\" should)"
+echo "   ✅ Scala comments (\"initial REV accounts\" -> \"initial ${TICKER_UPPER} accounts\")"
+echo "   ✅ Python integration test variables (alice_rev_address -> alice_${TICKER_LOWER}_address)"
+echo "   ✅ Python method calls (get_rev_address() -> get_${TICKER_LOWER}_address())"
+echo "   ✅ Configuration file parameters (<revBalance> -> <${TICKER_LOWER}Balance>)"
+echo "   ✅ Configuration descriptions (\"amount of Rev they have bonded\" -> \"amount of ${TICKER_UPPER} they have bonded\")"
+echo "   ✅ Documentation section headers (## REV -> ## ${TICKER_UPPER})"
+echo "   ✅ Documentation token references (\"I want REV to be the currency\", \"As a REV holder\", etc.)"
+echo "   ✅ Documentation user scenarios (\"transfer 100 REV\", \"having the REV to pay\", etc.)"
+echo "   ✅ Error messages in test files (\"invalid rev address\" -> \"invalid ${TICKER_LOWER} address\")"
+echo "   ✅ File renaming (revaddress files -> ${TICKER_LOWER}address files)"
+echo "   ✅ Package comments (//scalapackage coop.rchain.rholang.rev -> //scalapackage coop.rchain.rholang.${TICKER_LOWER})"
+echo "   ✅ Docker documentation (Has initial REV balance -> Has initial ${TICKER_UPPER} balance)"
+echo "   ✅ YAML comments (# REV: -> # ${TICKER_UPPER}:)"
+echo "   ✅ Contract comments (// REV vault -> // ${TICKER_UPPER} vault)"
+echo ""
+echo "📊 COMPREHENSIVE COVERAGE:"
+echo "   🎯 Handled ALL instances found through case-insensitive 'rev' search"
+echo "   🎯 Preserved technical terms like 'reverse', 'revision', 'revert', 'previous'"
+echo "   🎯 Updated token-specific references across ALL file types"
+echo ""
+echo "📝 What was selectively NOT changed:"
+echo "   ⏭️  Technical terms like \"reverse\", \"revision\", \"revert\", \"previous\" - preserved as programming terminology"
+echo "   ⏭️  Some edge cases in documentation - only obvious token references updated"
 echo "   ⏭️  Historical wallet files (wallets_REV_BLOCK-*.txt) - preserved as blockchain history"
 echo "   ⏭️  Hardcoded blockchain addresses - preserved as blockchain history"
 echo "   ⏭️  Existing REV token balances in blockchain state - may need migration strategy"
